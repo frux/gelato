@@ -1,5 +1,5 @@
 import { RGBA } from '../color';
-import { Point } from '../object/point';
+import { Point } from '../geometry/point';
 import { Scene } from '../scene/scene';
 
 type ViewportParams = {

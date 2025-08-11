@@ -1,19 +1,39 @@
 import { RGBA } from '../color';
 import { ObjectManager } from '../object-manager';
-import { Renderer } from '../renderer';
-import { Viewport } from '../viewport';
-import { Obj } from '../object/obj';
+import { Obj } from '../object';
+import {
+	createTransformationMatrix,
+	TransformationParams,
+} from '../matrix/transformation';
 
 type SceneParams = {
 	backgroundColor: RGBA;
+	transformation: TransformationParams;
 };
+
+const DEFAULT_TRANSFORMATION = {
+	translateX: 0,
+	translateY: 0,
+	translateZ: 0,
+	rotateX: 0,
+	rotateY: 0,
+	rotateZ: 0,
+	scaleX: 1,
+	scaleY: 1,
+	scaleZ: 1,
+} as const;
 
 export class Scene {
 	backgroundColor: RGBA;
+	transformation: Required<TransformationParams>;
 	private readonly objectManager: ObjectManager<Obj> = new ObjectManager();
 
 	constructor(params: SceneParams) {
 		this.backgroundColor = params.backgroundColor;
+		this.transformation = {
+			...DEFAULT_TRANSFORMATION,
+			...params.transformation,
+		};
 	}
 
 	addObject(object: Obj) {
@@ -28,5 +48,16 @@ export class Scene {
 
 	getObjects() {
 		return this.objectManager.getObjects();
+	}
+
+	setTransformation(transformation: TransformationParams) {
+		this.transformation = {
+			...this.transformation,
+			...transformation,
+		};
+	}
+
+	getTransformationMatrix() {
+		return createTransformationMatrix(this.transformation);
 	}
 }

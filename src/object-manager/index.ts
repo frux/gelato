@@ -1,4 +1,4 @@
-import { Obj } from '../object/obj';
+import { Geometry } from '../geometry/geometry';
 
 export class ObjectManager<T> {
 	objects: Set<T>;

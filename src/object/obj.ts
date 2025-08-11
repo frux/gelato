@@ -1,29 +1,19 @@
-import { Vec3 } from '../matrix/matrix';
-import { Renderer } from '../renderer';
-import { Point } from './point';
+import { rgba } from '../color';
+import { Geometry } from '../geometry';
+import { Material } from '../material';
 
-export type ObjParams = {
-	origin: Vec3;
+type ObjParams = {
+	geometry: Geometry;
+	material?: Material;
 };
 
-export abstract class Obj {
-	private origin: Point;
+export class Obj {
+	geometry: Geometry;
+	material: Material;
 
 	constructor(params: ObjParams) {
-		this.origin = new Point({
-			x: params.origin[0],
-			y: params.origin[1],
-			z: params.origin[2],
-		});
-	}
-
-	abstract render(renderer: Renderer): void;
-
-	getOrigin() {
-		return this.origin;
-	}
-
-	setOrigin(newOrigin: Point) {
-		this.origin = newOrigin;
+		this.geometry = params.geometry;
+		this.material =
+			params.material || new Material({ color: rgba(1, 0, 0, 1) });
 	}
 }

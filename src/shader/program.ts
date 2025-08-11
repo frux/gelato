@@ -1,4 +1,4 @@
-import { A_POSITION, U_TRANSFORMATION } from './const';
+import { A_COLOR, A_POSITION, U_TRANSFORMATION } from './const';
 import { FragmentShader } from './fragment-shader';
 import { VertexShader } from './vertex-shader';
 
@@ -44,6 +44,7 @@ export class Program {
 		gl.useProgram(this.program);
 
 		this.initAttribute(gl, 'position', A_POSITION);
+		this.initAttribute(gl, 'color', A_COLOR);
 		this.initUniform(gl, 'transformation', U_TRANSFORMATION);
 	}
 

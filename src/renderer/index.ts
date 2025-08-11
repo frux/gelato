@@ -1,7 +1,10 @@
 import { Matrix } from '../matrix';
-import { createTransformationMatrix } from '../matrix/transformation';
-import { Triangle } from '../object';
+import {
+	applyProjectionMatrix,
+	createProjectionMatrix,
+} from '../matrix/transformation';
 import { Scene } from '../scene';
+import { Obj } from '../object';
 
 type RendererParams = {
 	gl: WebGL2RenderingContext;
@@ -12,16 +15,21 @@ export class Renderer {
 	private readonly gl: WebGL2RenderingContext;
 	private readonly attributes: {
 		position: number;
+		color: number;
 	};
 	private readonly uniforms: {
 		transformation: WebGLUniformLocation;
 	};
+	private readonly vao: WebGLVertexArrayObject;
 
 	constructor(params: RendererParams) {
 		this.gl = params.gl;
 
+		this.vao = this.gl.createVertexArray();
+
 		this.attributes = {
 			position: getAttributeLocationFromParams(params, 'position'),
+			color: getAttributeLocationFromParams(params, 'color'),
 		};
 
 		this.uniforms = {
@@ -30,42 +38,41 @@ export class Renderer {
 	}
 
 	drawScene(scene: Scene) {
+		this.gl.enable(this.gl.CULL_FACE);
 		this.clear(scene);
-
-		for (const obj of scene.getObjects()) {
-			obj.render(this);
-		}
-
-		console.debug('Scene rendered', this);
-	}
-
-	drawTriangle(triangle: Triangle) {
-		const vertices = triangle.points.flatMap((point) => {
-			const globalPoint = point.global(triangle.getOrigin());
-
-			return [globalPoint.x, globalPoint.y, globalPoint.z];
-		});
-
-		this.setAttribute3f(this.attributes.position, vertices);
-		this.setUniformMatrix4fv(
-			this.uniforms.transformation,
-			createTransformationMatrix({
-				depth: 1,
-				rotateX: 0,
-				rotateY: 0,
-				rotateZ: 0,
-				scaleX: 1,
-				scaleY: 1,
-				scaleZ: 1,
-				translateX: 1,
-				translateY: -1,
-				translateZ: 1,
-				height: this.gl.canvas.height,
-				width: this.gl.canvas.width,
-			}),
+		const projectionMatrix = createProjectionMatrix(
+			this.gl.canvas.width,
+			this.gl.canvas.height,
+			this.gl.canvas.height,
+		);
+		const sceneTransformationMatrix = scene.getTransformationMatrix();
+		const fullTransformationMatrix = applyProjectionMatrix(
+			sceneTransformationMatrix,
+			projectionMatrix,
 		);
 
-		this.gl.drawArrays(this.gl.TRIANGLES, 0, triangle.points.length);
+		this.setUniformMatrix4fv(
+			this.uniforms.transformation,
+			fullTransformationMatrix,
+		);
+
+		for (const obj of scene.getObjects()) {
+			this.drawObject(obj);
+		}
+
+		console.debug('Scene rendered', this, scene);
+	}
+
+	drawObject(obj: Obj) {
+		const vertices = obj.geometry.getVertices();
+		const colors = obj.material.getColorsForVertices(vertices);
+
+		this.setAttributeFloat(this.attributes.color, colors, 4);
+		this.setAttributeFloat(this.attributes.position, vertices, 3);
+
+		this.gl.drawArrays(this.gl.TRIANGLES, 0, vertices.length);
+
+		console.debug(`${obj.geometry.constructor.name} rendered`, obj);
 	}
 
 	clear(scene: Scene) {
@@ -73,18 +80,17 @@ export class Renderer {
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 	}
 
-	private setAttribute3f(location: number, data: number[]) {
+	private setAttributeFloat(location: number, data: number[], size: number) {
+		this.gl.bindVertexArray(this.vao);
+		this.gl.enableVertexAttribArray(location);
+
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.gl.createBuffer());
 		this.gl.bufferData(
 			this.gl.ARRAY_BUFFER,
 			new Float32Array(data),
 			this.gl.STATIC_DRAW,
 		);
-
-		const vao = this.gl.createVertexArray();
-		this.gl.bindVertexArray(vao);
-		this.gl.vertexAttribPointer(location, 3, this.gl.FLOAT, false, 0, 0);
-		this.gl.enableVertexAttribArray(location);
+		this.gl.vertexAttribPointer(location, size, this.gl.FLOAT, false, 0, 0);
 	}
 
 	private setUniformMatrix4fv(location: WebGLUniformLocation, data: Matrix) {
