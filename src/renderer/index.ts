@@ -43,7 +43,7 @@ export class Renderer {
 		const projectionMatrix = createProjectionMatrix(
 			this.gl.canvas.width,
 			this.gl.canvas.height,
-			this.gl.canvas.height,
+			this.gl.canvas.width,
 		);
 		const sceneTransformationMatrix = scene.getTransformationMatrix();
 		const fullTransformationMatrix = applyProjectionMatrix(
@@ -70,7 +70,7 @@ export class Renderer {
 		this.setAttributeFloat(this.attributes.color, colors, 4);
 		this.setAttributeFloat(this.attributes.position, vertices, 3);
 
-		this.gl.drawArrays(this.gl.TRIANGLES, 0, vertices.length);
+		this.gl.drawArrays(this.gl.TRIANGLES, 0, vertices.length / 3);
 
 		console.debug(`${obj.geometry.constructor.name} rendered`, obj);
 	}

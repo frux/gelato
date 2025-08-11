@@ -78,18 +78,62 @@ mainScene.addObject(triangle);
 mainScene.addObject(rectangle);
 mainScene.addObject(cube);
 engine.addScene(mainScene);
+engine.render();
 
-let frameNumber = 0;
-const fps = 120;
-const aniimationLength = 5000;
-const framesCount = (aniimationLength / 1000) * fps;
-setInterval(() => {
-	const framePhase = frameNumber / framesCount;
-	mainScene.setTransformation({
-		rotateY: framePhase * 2 * Math.PI,
+let isRotating = false;
+let isDragging = false;
+document
+	.getElementById('viewport')!
+	.addEventListener('mousedown', (e: MouseEvent) => {
+		switch (e.button) {
+			case 0: // Left click
+				break;
+			case 1: // Middle click
+				isDragging = true;
+				break;
+			case 2: // Right click
+				isRotating = true;
+				break;
+		}
 	});
 
-	engine.render();
+document
+	.getElementById('viewport')!
+	.addEventListener('mouseup', (e: MouseEvent) => {
+		switch (e.button) {
+			case 0: // Left click
+				break;
+			case 1: // Middle click
+				isDragging = false;
+				break;
+			case 2: // Right click
+				isRotating = false;
+				break;
+		}
+	});
 
-	frameNumber = ++frameNumber % framesCount;
-}, 1000 / fps);
+document.getElementById('viewport')!.addEventListener('mousemove', (event) => {
+	const { movementX, movementY } = event as MouseEvent;
+	const deltaX = movementX / window.innerWidth;
+	const deltaY = movementY / window.innerHeight;
+
+	if (isRotating) {
+		mainScene.setTransformation({
+			rotateX: mainScene.transformation.rotateX - deltaY * 10,
+			rotateY: mainScene.transformation.rotateY - deltaX * 10,
+		});
+
+		engine.render();
+		return;
+	}
+
+	if (isDragging) {
+		mainScene.setTransformation({
+			translateX: mainScene.transformation.translateX + deltaX * 2,
+			translateY: mainScene.transformation.translateY - deltaY * 2,
+		});
+
+		engine.render();
+		return;
+	}
+});
